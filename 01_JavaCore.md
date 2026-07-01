@@ -358,3 +358,790 @@ public class AccountService {
 - Prefer `RuntimeException` for business validation
 - Handle centrally using `@RestControllerAdvice`
 - Memory Trick: **Checked = Compiler Checks, Runtime = Programmer Checks**
+
+
+# Q5. Checked vs Unchecked Exceptions; When to Create a Custom Exception
+
+## What?
+
+Java categorizes exceptions into **checked** and **unchecked** exceptions. Checked exceptions extend `Exception` (excluding `RuntimeException`) and must be either handled using `try-catch` or declared using the `throws` keyword. They typically represent recoverable situations such as file access failures, database connectivity issues, or network errors.
+
+Unchecked exceptions extend `RuntimeException` and represent programming errors or invalid application states. Examples include `NullPointerException`, `IllegalArgumentException`, and `IndexOutOfBoundsException`. The compiler does not force developers to handle them.
+
+Custom exceptions are user-defined exceptions that represent domain-specific business errors. In modern Spring Boot applications, custom exceptions usually extend `RuntimeException` and are handled centrally using `@RestControllerAdvice`.
+
+## Why?
+
+Checked exceptions ensure that callers explicitly acknowledge recoverable failures, making APIs safer when external resources are involved.
+
+Unchecked exceptions keep business code clean by avoiding excessive `try-catch` blocks for programming mistakes. Custom exceptions improve readability by expressing business intent clearly instead of throwing generic exceptions.
+
+## Key Points
+
+- Checked exceptions extend `Exception`.
+- Unchecked exceptions extend `RuntimeException`.
+- Checked exceptions must be handled or declared.
+- Runtime exceptions are optional to catch.
+- Create custom exceptions for business-specific validation.
+- Prefer meaningful exception names.
+- Handle custom exceptions globally using `@RestControllerAdvice`.
+- Avoid catching generic `Exception`.
+- Never use exceptions for normal program flow.
+- Include meaningful exception messages.
+
+## Example
+
+```java
+public class InsufficientBalanceException extends RuntimeException {
+
+    public InsufficientBalanceException(String message) {
+        super(message);
+    }
+}
+
+public class AccountService {
+
+    public void withdraw(double amount, double balance) {
+        if (amount > balance) {
+            throw new InsufficientBalanceException("Insufficient balance");
+        }
+    }
+}
+```
+
+## Interview Tip
+
+"Checked exceptions represent recoverable conditions and must be handled or declared. Unchecked exceptions represent programming errors and extend `RuntimeException`. For business validation failures such as invalid orders or insufficient balance, I create custom runtime exceptions and handle them globally using Spring Boot's exception handling."
+
+## Quick Revision
+
+- Checked → Compiler enforced
+- Unchecked → Runtime only
+- Recoverable → Checked
+- Programming errors → Unchecked
+- Custom exceptions improve readability
+- Prefer `RuntimeException` for business validation
+- Use global exception handling
+- Memory Trick: **Checked = Compiler Checks**
+
+---
+
+# Q6. Java's Pass-by-Value Semantics (Especially for Objects)
+
+## What?
+
+Java is **always pass-by-value**. Whether the method parameter is a primitive or an object reference, Java passes a **copy of the value**.
+
+For primitive types, the actual value is copied. Changing the parameter inside the method does not affect the original variable.
+
+For objects, the value being copied is the **reference**, not the object itself. Both the original reference and the copied reference point to the same object, so modifying the object's state is visible outside the method. However, reassigning the parameter to a new object does not affect the caller's reference.
+
+## Why?
+
+Pass-by-value makes parameter passing simple and predictable. Since methods receive copies, they cannot accidentally replace variables owned by the caller.
+
+Understanding this behavior prevents common interview mistakes, especially when discussing mutable objects, collections, and method parameters.
+
+## Key Points
+
+- Java is always pass-by-value.
+- Primitive values are copied.
+- Object references are copied.
+- Both references point to the same object.
+- Modifying object fields affects the original object.
+- Reassigning the parameter does not affect the caller.
+- Java is **not** pass-by-reference.
+- Strings appear unchanged because they are immutable.
+- Collections behave similarly since they are mutable.
+- Common mistake: saying Java passes objects by reference.
+
+## Example
+
+```java
+class Employee {
+    String name;
+
+    Employee(String name) {
+        this.name = name;
+    }
+}
+
+public class Demo {
+
+    static void update(Employee emp) {
+        emp.name = "Bob";
+    }
+
+    static void replace(Employee emp) {
+        emp = new Employee("Charlie");
+    }
+
+    public static void main(String[] args) {
+
+        Employee e = new Employee("Alice");
+
+        update(e);
+        System.out.println(e.name);      // Bob
+
+        replace(e);
+        System.out.println(e.name);      // Bob
+    }
+}
+```
+
+## Interview Tip
+
+"Java is always pass-by-value. For objects, the copied value is the reference, not the object itself. Therefore, modifying the object's fields is reflected outside the method, but assigning the parameter to a new object only changes the local copy of the reference."
+
+## Quick Revision
+
+- Java is always pass-by-value
+- Primitive → value copied
+- Object → reference copied
+- Same object, different references
+- Object state can change
+- Reference cannot be replaced externally
+- Java is never pass-by-reference
+- Memory Trick: **Copy the Reference, Not the Object**
+
+---
+
+# Q7. Functional Interfaces: Runnable, Callable, Supplier, Function
+
+## What?
+
+A functional interface contains exactly one abstract method and can be implemented using a lambda expression or method reference. Java provides several built-in functional interfaces in `java.util.function` and `java.util.concurrent`.
+
+`Runnable` represents a task that takes no input and returns no result.
+
+`Callable<T>` represents a task that returns a value and can throw checked exceptions.
+
+`Supplier<T>` supplies an object without taking any input.
+
+`Function<T, R>` accepts one input and produces one output.
+
+## Why?
+
+Functional interfaces simplify code by enabling lambda expressions, improving readability and reducing boilerplate.
+
+They are widely used in Streams, CompletableFuture, Spring Boot, asynchronous programming, and dependency injection.
+
+## Key Points
+
+- Functional interface has one abstract method.
+- Annotate with `@FunctionalInterface`.
+- `Runnable` → no return value.
+- `Callable` → returns value and throws exceptions.
+- `Supplier` → produces data.
+- `Function` → transforms data.
+- Lambdas require functional interfaces.
+- Streams heavily use `Function`.
+- Executors use `Runnable` and `Callable`.
+- Common mistake: confusing `Runnable` with `Callable`.
+
+## Example
+
+```java
+Supplier<String> supplier = () -> "Java";
+
+Function<String, Integer> length = String::length;
+
+Runnable task = () -> System.out.println("Running");
+
+Callable<Integer> callable = () -> 100;
+
+System.out.println(supplier.get());
+System.out.println(length.apply("Spring"));
+```
+
+## Interview Tip
+
+"`Runnable` performs work without returning anything. `Callable` performs work and returns a result while allowing checked exceptions. `Supplier` produces values, whereas `Function` transforms one object into another. These interfaces are heavily used with lambdas, Streams, and asynchronous programming."
+
+## Quick Revision
+
+- One abstract method
+- Lambda compatible
+- Runnable → Task
+- Callable → Task + Result
+- Supplier → Produce
+- Function → Transform
+- Streams use Function
+- Memory Trick: **Run, Call, Supply, Transform**
+
+---
+
+# Q8. `final` vs `finally` vs `finalize()`
+
+## What?
+
+Although their names are similar, `final`, `finally`, and `finalize()` serve completely different purposes.
+
+`final` is a keyword used to make variables constant, prevent method overriding, or prevent class inheritance.
+
+`finally` is a block associated with exception handling that executes regardless of whether an exception occurs, making it suitable for resource cleanup.
+
+`finalize()` was a method of `Object` that the garbage collector could invoke before reclaiming memory. It has been deprecated for removal and should never be used in modern Java.
+
+## Why?
+
+These features address different problems: `final` improves immutability and design safety, `finally` ensures cleanup, and `finalize()` was originally intended for cleanup but proved unreliable.
+
+Modern Java uses **try-with-resources** instead of relying on `finally` for closing resources whenever possible.
+
+## Key Points
+
+- `final` is a keyword.
+- `finally` belongs to exception handling.
+- `finalize()` is deprecated.
+- Final variables cannot be reassigned.
+- Final methods cannot be overridden.
+- Final classes cannot be inherited.
+- `finally` usually executes even if an exception occurs.
+- Prefer try-with-resources over `finally`.
+- Never depend on `finalize()`.
+- Common mistake: confusing `final` with `finally`.
+
+## Example
+
+```java
+final class Utility {
+
+    public static void process() {
+
+        try {
+            System.out.println("Processing...");
+        } finally {
+            System.out.println("Cleanup");
+        }
+    }
+}
+```
+
+## Interview Tip
+
+"`final` is used for constants and preventing inheritance or overriding. `finally` guarantees cleanup code execution after a try-catch block. `finalize()` is deprecated and should not be used; modern Java recommends try-with-resources for resource management."
+
+## Quick Revision
+
+- final → Restrict
+- finally → Cleanup
+- finalize() → Deprecated
+- Final variable = constant
+- Final method = cannot override
+- Final class = cannot extend
+- Prefer try-with-resources
+- Memory Trick: **Final = Restrict, Finally = Cleanup**
+
+---
+
+# Q9. Primitives vs Wrapper Classes, and Autoboxing Pitfalls
+
+## What?
+
+Java provides eight primitive data types (`int`, `double`, `boolean`, etc.) that store values directly and are highly efficient.
+
+Wrapper classes (`Integer`, `Double`, `Boolean`, etc.) are object representations of primitives. They allow primitive values to be used with collections, generics, and APIs requiring objects.
+
+Autoboxing automatically converts primitives to wrappers, while unboxing converts wrappers back to primitives.
+
+## Why?
+
+Collections such as `List` and `Map` work only with objects, making wrapper classes essential.
+
+Although autoboxing simplifies code, excessive boxing/unboxing can create unnecessary objects and even cause `NullPointerException` during unboxing.
+
+## Key Points
+
+- Primitives store values directly.
+- Wrappers are objects.
+- Generics require wrapper classes.
+- Autoboxing is automatic conversion.
+- Unboxing can throw `NullPointerException`.
+- Wrappers consume more memory.
+- Primitives are generally faster.
+- Integer values (-128 to 127) are cached.
+- Use primitives unless null is required.
+- Common mistake: comparing wrappers using `==`.
+
+## Example
+
+```java
+Integer number = 10;      // Autoboxing
+
+int value = number;       // Unboxing
+
+Integer a = 100;
+Integer b = 100;
+
+System.out.println(a == b);       // true (cached)
+
+Integer x = 200;
+Integer y = 200;
+
+System.out.println(x == y);       // false
+System.out.println(x.equals(y));  // true
+```
+
+## Interview Tip
+
+"Primitives store values directly and are faster. Wrapper classes are objects required by collections and generics. Java automatically performs autoboxing and unboxing, but careless unboxing may lead to `NullPointerException`, and wrapper comparisons should use `equals()` instead of `==`."
+
+## Quick Revision
+
+- Primitive = Value
+- Wrapper = Object
+- Collections need wrappers
+- Autoboxing = Primitive → Wrapper
+- Unboxing = Wrapper → Primitive
+- Integer cache (-128 to 127)
+- Prefer primitives for performance
+- Memory Trick: **Primitive = Fast, Wrapper = Flexible**
+
+---
+
+# Q10. Composition vs Inheritance — When Do You Prefer Composition?
+
+## What?
+
+Inheritance models an **is-a** relationship, where a subclass extends a superclass and inherits its behavior.
+
+Composition models a **has-a** relationship by building classes from other objects. Instead of inheriting implementation, one object delegates work to another.
+
+Modern object-oriented design generally prefers composition because it reduces coupling and improves flexibility.
+
+## Why?
+
+Inheritance tightly couples subclasses to parent implementations. Changes in the superclass can unintentionally affect all subclasses.
+
+Composition promotes modular design, easier testing, better encapsulation, and greater flexibility. Frameworks like Spring Boot heavily rely on composition through dependency injection instead of inheritance.
+
+## Key Points
+
+- Inheritance → is-a relationship.
+- Composition → has-a relationship.
+- Composition provides loose coupling.
+- Easier unit testing.
+- Better encapsulation.
+- Supports dependency injection.
+- Avoid deep inheritance hierarchies.
+- Prefer interfaces with composition.
+- Spring heavily uses composition.
+- Common mistake: using inheritance just for code reuse.
+
+## Example
+
+```java
+interface Engine {
+    void start();
+}
+
+class PetrolEngine implements Engine {
+
+    @Override
+    public void start() {
+        System.out.println("Engine started");
+    }
+}
+
+class Car {
+
+    private final Engine engine;
+
+    Car(Engine engine) {
+        this.engine = engine;
+    }
+
+    public void start() {
+        engine.start();
+    }
+}
+```
+
+## Interview Tip
+
+"I prefer composition over inheritance because it creates loosely coupled and easily testable code. Inheritance is suitable only when there is a genuine 'is-a' relationship, whereas composition works better for assembling reusable components. Spring Boot's dependency injection is a practical example of composition."
+
+## Quick Revision
+
+- Inheritance = Is-A
+- Composition = Has-A
+- Composition reduces coupling
+- Easier testing
+- Better flexibility
+- Preferred in Spring Boot
+- Avoid deep inheritance
+- Memory Trick: **Favor Has-A over Is-A**
+
+
+# Q11. Static vs Instance Methods/Variables, and Static Initialization Order
+
+## What?
+
+In Java, **static members** belong to the class itself, whereas **instance members** belong to individual objects. Static variables have a single shared copy across all objects, while instance variables are unique to each object.
+
+Static methods can access only static members directly because they execute without requiring an object. Instance methods can access both instance and static members since they are invoked on an object.
+
+Java initializes static members when the class is first loaded into memory. This process follows a well-defined initialization order, ensuring static variables and blocks are initialized before any object is created.
+
+## Why?
+
+Static members are useful for data or behavior common to all objects, such as utility methods (`Math.max()`), constants, counters, or singleton instances.
+
+Instance members represent object-specific state and behavior. Choosing between static and instance members improves code organization, memory usage, and object-oriented design.
+
+## Key Points
+
+- Static members belong to the class.
+- Instance members belong to objects.
+- Static variables have only one shared copy.
+- Instance variables are unique per object.
+- Static methods cannot directly access instance variables.
+- Instance methods can access both static and instance members.
+- Static initialization occurs once when the class is loaded.
+- Static methods cannot use `this` or `super`.
+- Prefer static methods for utility functionality.
+- Common mistake: accessing instance members directly from static methods.
+
+## Example
+
+```java
+class Employee {
+
+    static int employeeCount = 0;
+    String name;
+
+    static {
+        System.out.println("Static block executed");
+    }
+
+    Employee(String name) {
+        this.name = name;
+        employeeCount++;
+    }
+
+    static void printCount() {
+        System.out.println(employeeCount);
+    }
+
+    void printName() {
+        System.out.println(name);
+    }
+}
+```
+
+### Static Initialization Order
+
+```text
+1. Static variables (in declaration order)
+2. Static initialization blocks
+3. main() starts
+4. Object creation
+5. Instance variables
+6. Instance initialization blocks
+7. Constructor
+```
+
+## Interview Tip
+
+"Static members belong to the class and are loaded once when the class is initialized. Instance members belong to individual objects. Static methods can access only static members directly, whereas instance methods can access both. Java initializes static variables and static blocks before any object is created."
+
+## Quick Revision
+
+- Static → Class level
+- Instance → Object level
+- Static variable → One copy
+- Instance variable → One per object
+- Static methods cannot use `this`
+- Static initialization happens once
+- Utility methods are usually static
+- Memory Trick: **Static = Shared, Instance = Separate**
+
+---
+
+# Q12. The Diamond Problem — How Does Java Resolve It with Default Methods?
+
+## What?
+
+The **diamond problem** occurs when a class inherits the same method implementation from multiple parent types, creating ambiguity about which implementation should be used.
+
+Java avoids this problem for classes because it does not support multiple inheritance of classes. However, since Java 8 introduced **default methods** in interfaces, ambiguity can occur when multiple interfaces define the same default method.
+
+Java resolves this by requiring the implementing class to explicitly override the conflicting method.
+
+## Why?
+
+Default methods allow interfaces to evolve without breaking existing implementations. The explicit override rule prevents ambiguity and ensures developers choose the desired implementation.
+
+This approach provides many benefits of multiple inheritance without the complexity found in languages that support multiple class inheritance.
+
+## Key Points
+
+- Java does not support multiple inheritance of classes.
+- Diamond problem occurs with multiple default methods.
+- Compiler forces explicit override.
+- Interface methods can be called using `InterfaceName.super.method()`.
+- Class methods always take precedence over interface default methods.
+- More specific interfaces take precedence over parent interfaces.
+- Default methods improve backward compatibility.
+- Common mistake: assuming Java allows multiple class inheritance.
+- Interface conflicts are resolved at compile time.
+- Frequently asked after default methods.
+
+## Example
+
+```java
+interface A {
+
+    default void show() {
+        System.out.println("A");
+    }
+}
+
+interface B {
+
+    default void show() {
+        System.out.println("B");
+    }
+}
+
+class Demo implements A, B {
+
+    @Override
+    public void show() {
+        A.super.show();
+    }
+}
+```
+
+## Interview Tip
+
+"Java doesn't support multiple inheritance of classes, so the classic diamond problem doesn't exist there. With interface default methods, if two interfaces provide the same default implementation, the implementing class must override the method and explicitly choose which implementation to use."
+
+## Quick Revision
+
+- No multiple inheritance of classes
+- Default methods can conflict
+- Override resolves ambiguity
+- Use `Interface.super.method()`
+- Class methods have higher priority
+- Compiler detects conflicts
+- Default methods improve compatibility
+- Memory Trick: **Two Defaults → Override Required**
+
+---
+
+# Q13. Designing an Immutable Class in Java
+
+## What?
+
+An immutable class is one whose state cannot change after object creation. Once an object is constructed, its fields remain constant throughout its lifetime.
+
+Examples include `String`, wrapper classes, and Java Records. Immutable objects are naturally thread-safe because no synchronization is required after construction.
+
+To create an immutable class, prevent external modification of its internal state and expose data safely.
+
+## Why?
+
+Immutable objects eliminate many concurrency problems, simplify debugging, and make objects safe to cache or share across threads.
+
+They are widely used for value objects, configuration classes, DTOs, money objects, and cache keys.
+
+## Key Points
+
+- Declare the class as `final`.
+- Make all fields `private final`.
+- Initialize fields through the constructor.
+- Do not provide setters.
+- Return defensive copies of mutable objects.
+- Perform defensive copying in constructors.
+- Prefer immutable field types.
+- Records are preferred for immutable data carriers.
+- Thread-safe by design.
+- Common mistake: exposing mutable collections directly.
+
+## Example
+
+```java
+import java.util.List;
+
+public final class Employee {
+
+    private final int id;
+    private final String name;
+    private final List<String> skills;
+
+    public Employee(int id, String name, List<String> skills) {
+        this.id = id;
+        this.name = name;
+        this.skills = List.copyOf(skills);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public List<String> getSkills() {
+        return List.copyOf(skills);
+    }
+}
+```
+
+## Interview Tip
+
+"To design an immutable class, I make the class final, declare all fields private and final, initialize them through the constructor, avoid setters, and defensively copy mutable fields. Immutable objects are thread-safe and work well as cache keys and value objects."
+
+## Quick Revision
+
+- Final class
+- Private final fields
+- Constructor initialization
+- No setters
+- Defensive copies
+- Thread-safe
+- Prefer Records when appropriate
+- Memory Trick: **Final + Private + No Setter = Immutable**
+
+---
+
+# Q14. Shallow Copy vs Deep Copy, and Implementing `clone()` Correctly
+
+## What?
+
+A **shallow copy** copies the object itself but shares references to nested mutable objects. Changes to shared objects affect both copies.
+
+A **deep copy** creates completely independent copies of both the object and all nested mutable objects.
+
+Java provides the `clone()` method through the `Cloneable` interface, but it performs only a shallow copy by default.
+
+## Why?
+
+Deep copies prevent unintended side effects when objects contain mutable state.
+
+Modern Java generally avoids `clone()` because it has design limitations. Production code usually prefers copy constructors, factory methods, or builder patterns.
+
+## Key Points
+
+- Shallow copy shares referenced objects.
+- Deep copy duplicates referenced objects.
+- `Object.clone()` performs shallow copy.
+- Implement `Cloneable` to enable cloning.
+- Override `clone()` carefully.
+- Deep copy nested mutable fields manually.
+- Copy constructors are preferred.
+- Immutable objects do not require deep copying.
+- Builder pattern is often cleaner.
+- Common mistake: assuming `clone()` performs deep copy.
+
+## Example
+
+```java
+class Address {
+
+    String city;
+
+    Address(String city) {
+        this.city = city;
+    }
+}
+
+class Employee {
+
+    String name;
+    Address address;
+
+    Employee(String name, Address address) {
+        this.name = name;
+        this.address = new Address(address.city);
+    }
+
+    Employee(Employee other) {
+        this(other.name, other.address);
+    }
+}
+```
+
+## Interview Tip
+
+"`clone()` performs only a shallow copy by default, so mutable objects remain shared. In production applications, I usually prefer copy constructors or builder patterns because they are simpler, safer, and easier to maintain."
+
+## Quick Revision
+
+- Shallow → Shared references
+- Deep → Independent objects
+- clone() → Shallow copy
+- Copy nested mutable objects
+- Prefer copy constructors
+- Immutable objects are safe
+- Builder is often preferred
+- Memory Trick: **Shallow Shares, Deep Duplicates**
+
+---
+
+# Q15. Enums Beyond Constants — Can They Implement Interfaces or Have Methods?
+
+## What?
+
+Java enums are special classes that represent a fixed set of constants. Unlike many languages, enums can contain fields, constructors, methods, and even implement interfaces.
+
+Each enum constant is actually an object, allowing behavior to be associated with constants rather than using large `switch` statements.
+
+Enums cannot extend another class because they already extend `java.lang.Enum`.
+
+## Why?
+
+Enums improve type safety by preventing invalid values while allowing behavior to remain close to the data.
+
+They are commonly used for application states, payment methods, user roles, order statuses, and strategy implementations.
+
+## Key Points
+
+- Enums are special classes.
+- Enum constants are objects.
+- Can have constructors.
+- Can have fields and methods.
+- Can implement interfaces.
+- Cannot extend another class.
+- Constructors are implicitly private.
+- Often replace integer constants.
+- Frequently used with `switch`.
+- Common mistake: thinking enums only store constants.
+
+## Example
+
+```java
+interface Discount {
+
+    double apply(double amount);
+}
+
+enum Membership implements Discount {
+
+    SILVER {
+        public double apply(double amount) {
+            return amount * 0.95;
+        }
+    },
+
+    GOLD {
+        public double apply(double amount) {
+            return amount * 0.90;
+        }
+    };
+}
+```
+
+## Interview Tip
+
+"Enums are much more than constants. They are full-fledged classes that can have fields, constructors, methods, and even implement interfaces. This makes them ideal for representing fixed business states while keeping related behavior inside the enum itself."
+
+## Quick Revision
+
+- Enum = Special class
+- Constants are objects
+- Can have methods
+- Can have constructors
+- Can implement interfaces
+- Cannot extend classes
+- Constructors are private
+- Memory Trick: **Enum = Class with Fixed Objects**
